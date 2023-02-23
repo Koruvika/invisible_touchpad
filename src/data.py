@@ -27,7 +27,17 @@ data_classes = pd.DataFrame(
 
 
 def get_data(arduino_port="COM4", baud=38400, keyboard=None, samples=2000):
-    print(keyboard)
+    """
+    Các bước chính thu thập dữ liệu:
+    1. Xác định loại hành động thu thập thông qua "keyboard", tạo file ở folder dữ liệu tương ứng
+    2. Tạo Serial reader kết nối đến Arduino port
+    3. Chạy vòng lặp thu dữ liệu từ Serial và ghi lên file.
+
+    :param arduino_port: Port to connect arduino sensor
+    :param baud:
+    :param keyboard: representation for function to collect data
+    :param samples: how many samples to collect
+    """
     if keyboard is None:
         print("Please press any keyboard")
         return
