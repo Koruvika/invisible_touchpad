@@ -3,20 +3,21 @@ import tkinter.messagebox
 import customtkinter
 import sys
 import win32api
+import socket
+from pynput.mouse import Button, Controller
+import threading
+import screen_brightness_control as sbc
 
 # customtkinter.ScalingTracker.set_user_scaling(0.5)
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
 
-def slider_event(value):
-    print(value)
-
-
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
+        self.init_server()
         self.init_parameter()
         self.init_frame()
         self.init_left()
@@ -24,6 +25,8 @@ class App(customtkinter.CTk):
         self.init_bottom()
 
     def init_parameter(self):
+        self.mouse = Controller()
+
         self.dpi = 50
         self.scroll_speed = 50
         self.cursor = "Arrow"
@@ -133,7 +136,7 @@ class App(customtkinter.CTk):
             values=["Arrow", "Heart", "Mouse"],
             command=self.cbb_cursor_callback
         )
-        self.cbb_cursor.grid(row=2, column=0, pady=0, padx=(25,25), sticky="ew")
+        self.cbb_cursor.grid(row=2, column=0, pady=0, padx=(25, 25), sticky="ew")
 
         self.label_click = customtkinter.CTkLabel(
             master=self.frame_right,
@@ -221,7 +224,7 @@ class App(customtkinter.CTk):
 
         self.label_ip = customtkinter.CTkLabel(
             master=self.frame_bottom,
-            text="IP Address: 10.10.200.2",
+            text=f"IP Address: {self.local_ip}",
             justify="left",
             anchor="w",
             text_color=("gray30", "gray75"),
@@ -230,7 +233,7 @@ class App(customtkinter.CTk):
 
         self.label_port = customtkinter.CTkLabel(
             master=self.frame_bottom,
-            text="Host: 20002",
+            text=f"Host: {self.local_port}",
             justify="left",
             anchor="w",
             text_color=("gray30", "gray75"),
@@ -243,6 +246,14 @@ class App(customtkinter.CTk):
             command=self.connect_button_event
         )
         self.button_connect.grid(row=0, column=1, pady=0, rowspan=2, padx=(25, 25), sticky="ew")
+
+    def init_server(self):
+        host_name = socket.gethostname()
+        self.local_ip = socket.gethostbyname(host_name)
+        self.local_port = 20001
+
+        self.bufferSize = 1024
+        self.udp_server_socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
     def change_mode(self):
         if self.switch_2.get() == 1:
@@ -266,7 +277,36 @@ class App(customtkinter.CTk):
         self.scroll_speed = value
 
     def connect_button_event(self):
-        pass
+        try:
+            self.udp_server_socket.bind((self.local_ip, self.local_port))
+        except OSError as e:
+            print(f"Just {e}, it's not important here!")
+
+        self.recv_thread = threading.Thread(target=self.recv)
+        self.recv_thread.start()
+
+    def recv(self):
+        while True:
+            byteAddressPair = self.udp_server_socket.recvfrom(self.bufferSize)
+            message = byteAddressPair[0].decode('utf-8')
+            address = byteAddressPair[1]
+            arr = message.strip().split(' ')
+
+            if len(arr) != 3:
+                continue
+            else:
+                action, dx, dy = arr
+            if action == 'move':
+                self.mouse.move(int(float(dx) * self.dpi), int(float(dy) * self.dpi))
+            elif action == 'click':
+                self.mouse.click(Button.left, 1)
+            elif action == 'scroll_up':
+                self.mouse.scroll(0, -10)
+            elif action == 'scroll_down':
+                self.mouse.scroll(0, 10)
+
+    def on_closing(self, event=0):
+        self.destroy()
 
     def start(self):
         self.mainloop()
