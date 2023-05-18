@@ -8,6 +8,7 @@ from pynput.mouse import Button, Controller
 import threading
 import screen_brightness_control as sbc
 
+
 # customtkinter.ScalingTracker.set_user_scaling(0.5)
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard), "green", "dark-blue"
