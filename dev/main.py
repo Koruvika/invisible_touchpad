@@ -1,21 +1,25 @@
-from tkinter import messagebox
-import customtkinter
-import socket
-from pynput.mouse import Button, Controller
-import threading
-import screen_brightness_control as sbc
-import comtypes
-import win32gui
 import ctypes
-from ctypes import cast, POINTER
-from comtypes import CLSCTX_ALL
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume, ISimpleAudioVolume
-import sounddevice as sd
+import socket
+import sys
+import threading
+from tkinter import messagebox
+
+import comtypes
+import customtkinter
+import screen_brightness_control as sbc
 import win32con
+import win32gui
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from pynput.mouse import Button, Controller
+
+sys.path.insert(0, ".")
+from bluetooth import bluetooth_scan
+from get_volume import get_volume
 
 # customtkinter.ScalingTracker.set_user_scaling(0.5)
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("dark-blue")  # Themes: "blue" (standard), "green", "dark-blue"
+
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -30,8 +34,8 @@ class App(customtkinter.CTk):
     def init_parameter(self):
         self.mouse = Controller()
 
-        self.default_dpi = 12
-        self.default_scroll_speed = 12
+        self.default_dpi = 17
+        self.default_scroll_speed = 15
 
         self.dpi = self.default_dpi
         self.scroll_speed = self.default_scroll_speed
@@ -244,19 +248,20 @@ class App(customtkinter.CTk):
     def connect_button_event(self):
         try:
             self.udp_server_socket.bind((self.local_ip, self.local_port))
+            # print("Connect Success")
+            self.recv_thread = threading.Thread(target=self.recv)
+            self.recv_thread.start()
         except OSError as e:
             print(f"Just {e}, it's not important here!")
-        print("Connect Success")
-        self.recv_thread = threading.Thread(target=self.recv)
-        self.recv_thread.start()
 
     def recv(self):
         while True:
             byteAddressPair = self.udp_server_socket.recvfrom(self.bufferSize)
+            # print(byteAddressPair)
             message = byteAddressPair[0].decode('utf-8')
             address = byteAddressPair[1]
             arr = message.strip().split(' ')
-
+            print(arr)
             if len(arr) != 3:
                 continue
             else:
@@ -273,7 +278,7 @@ class App(customtkinter.CTk):
                     self.mouse.scroll(0, -10)
                 elif self.scroll_type == "Volume":
                     current_volume = self.volume.GetMasterVolumeLevelScalar()
-                    new_volume = current_volume + self.scroll_speed/100
+                    new_volume = current_volume - self.scroll_speed/100
                     new_volume = new_volume if new_volume < 1 else 1
                     self.volume.SetMasterVolumeLevelScalar(new_volume, None)
                 elif self.scroll_type == "Light":
@@ -283,7 +288,7 @@ class App(customtkinter.CTk):
                     self.mouse.scroll(0, 10)
                 elif self.scroll_type == "Volume":
                     current_volume = self.volume.GetMasterVolumeLevelScalar()
-                    new_volume = current_volume - self.scroll_speed/100
+                    new_volume = current_volume + self.scroll_speed/100
                     new_volume = new_volume if 0 < new_volume else 0
                     self.volume.SetMasterVolumeLevelScalar(new_volume, None)
                 elif self.scroll_type == "Light":
@@ -303,10 +308,10 @@ class App(customtkinter.CTk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.mainloop()
 
+app = App()
+app.start()
 
-if __name__ == "__main__":
-    app = App()
-    app.start()
+# if __name__ == "__main__":
 
     # cursor = win32gui.LoadImage(0, 32512, win32con.IMAGE_CURSOR,
     #                             0, 0, win32con.LR_SHARED)
