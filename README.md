@@ -18,6 +18,3 @@ Dự án xây dựng thiết bị cho phép điều khiển con trỏ chuột t�
 <!-- Currently, the pre-trained model, inference code and some utilities are released.  -->
 
 ## Getting started
-
-### Requirements
-See [requirements.txt](./requirements.txt), tested on macOS and Linux platforms. The Windows users may refer to [FQA](#FQA) for building issues. Note that this repo uses Python3. The major dependencies are PyTorch, numpy, opencv-python and onnxruntime, etc. If you run the demos with `--onnx` flag to do acceleration, you may need to install `libomp` first, i.e., `brew install libomp` on macOS.
