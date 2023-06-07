@@ -1,8 +1,5 @@
 # Invisible Touchpad
 
-![GitHub repo size](https://img.shields.io/github/repo-size/cleardusk/3DDFA_V2.svg)
-[![](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1OKciI0ETCpWdRjP-VOGpBulDJojYfgWv)
-
 
 **\[Updates\]**
  - `2023.4.25`: Add GUI to desktop app
